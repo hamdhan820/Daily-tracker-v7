@@ -1,0 +1,102 @@
+name: Build Daily Routine Tracker APK
+on:
+  workflow_dispatch:
+    inputs:
+      with_blocking:
+        description: 'Include app-blocking accessibility service (Play Protect may block install)'
+        type: boolean
+        default: false
+  push:
+    branches: [main, master]
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v5
+      - name: Locate project files
+        run: |
+          set -e
+          find_pkg() { find "$1" -maxdepth 4 -name package.json -not -path '*/node_modules/*' -not -path '*/.git/*' | head -n1; }
+          P=$(find_pkg .)
+          if [ -z "$P" ]; then
+            Z=$(find . -maxdepth 4 -iname '*.zip' -not -path '*/node_modules/*' | head -n1)
+            if [ -n "$Z" ]; then
+              echo "No package.json found, extracting $Z"
+              mkdir -p /tmp/proj && unzip -o -q "$Z" -d /tmp/proj
+              P=$(find_pkg /tmp/proj)
+            fi
+          fi
+          if [ -z "$P" ]; then
+            echo "::error::package.json not found. Upload the files INSIDE the zip to the repo root (not the zip itself)."
+            ls -la
+            exit 1
+          fi
+          D=$(dirname "$P")
+          if [ "$(cd "$D" && pwd)" != "$(pwd)" ]; then
+            echo "Project found in $D, copying to repo root"
+            cp -a "$D"/. .
+          fi
+          ls -la
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Prepare web assets
+        run: mkdir -p www && cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png www/
+      - name: Add Android platform
+        run: npx cap add android
+      - name: Install app icons and alarm classes
+        run: |
+          set -e
+          R=android/app/src/main/res
+          rm -rf "$R/mipmap-anydpi-v26"
+          for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            d=${p%%:*}; s=${p##*:}; mkdir -p "$R/mipmap-$d"
+            cp "ic_$s.png" "$R/mipmap-$d/ic_launcher.png"
+            cp "ic_$s.png" "$R/mipmap-$d/ic_launcher_round.png"
+          done
+          J=android/app/src/main/java/com/mydaily/tracker
+          mkdir -p "$J"
+          cp AlarmPlugin.java AlarmReceiver.java AlarmActivity.java MainActivity.java FocusBlockingPlugin.java FocusBlockingService.java "$J/"
+          mkdir -p android/app/src/main/res/xml android/app/src/main/res/values
+          cat > android/app/src/main/res/xml/focus_blocking_accessibility_service.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+              android:description="@string/focus_blocking_service_description"
+              android:accessibilityEventTypes="typeWindowStateChanged"
+              android:accessibilityFeedbackType="feedbackGeneric"
+              android:notificationTimeout="100"
+              android:canRetrieveWindowContent="false"
+              android:accessibilityFlags="flagDefault" />
+          XML
+          cat > android/app/src/main/res/values/focus_strings.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="focus_blocking_service_description">Optional focus mode: when your study timer is running, redirect distracting apps to Home. This service checks the foreground app name only and does not read screen text.</string>
+          </resources>
+          XML
+          python3 patch_manifest.py
+        env:
+          WITH_BLOCKING: ${{ inputs.with_blocking }}
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: Daily-Routine-Tracker-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
