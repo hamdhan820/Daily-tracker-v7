@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_blocking_service_description">Optional focus mode: when your study timer is running, redirect distracting apps to Home. This service checks the foreground app name only and does not read screen text.</string>
+</resources>

@@ -1,0 +1,12 @@
+name = "daily-routine-openai"
+main = "index.js"
+compatibility_date = "2026-11-13"
+
+[vars]
+OPENAI_MODEL = "gpt-6.1-sol"
+APP_VERSION = "3.0.0"
+ALLOWED_ORIGINS = "capacitor://localhost,http://localhost,https://localhost"
+# Set these after publishing a public APK/App Store release.
+ANDROID_APK_URL = ""
+IOS_APP_URL = ""
+RELEASE_NOTES = "Daily Routine Tracker 3.0.0"

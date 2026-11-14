@@ -1,0 +1,9 @@
+{
+  "appId": "com.mydaily.tracker",
+  "appName": "Daily Routine Tracker",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

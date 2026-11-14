@@ -1,0 +1,20 @@
+DAILY ROUTINE TRACKER 3.3.0 — NEON PULSE
+
+This is the refreshed mobile-first app package.
+
+VISUAL DIRECTION
+- Neon Pulse dark interface with electric cyan, ultraviolet and lime accents.
+- Dynamic progress orbit, ambient lighting and glass bottom navigation.
+- Distinct Today, Study, Prayer, AI, Focus and Workspace experiences.
+- Continuous timetable layout instead of a generic stack of cards.
+
+CORE FEATURES RETAINED
+Prayer calculations and Azan alarms, study planning, focus timer and optional focus blocking, achievement/exam countdowns, AI gateway, local data and backup tools.
+
+GITHUB UPLOAD STEPS
+1. Upload this ZIP to the root of Daily-tracker-v7.
+2. Delete the older 02-Daily-Routine-Tracker-3.2-Premium-Editorial-Flow.zip from the repository root.
+3. Keep .github/workflows/done.yml unchanged.
+4. Open GitHub Actions and check the newest Build Daily Routine Tracker APK run after the old ZIP is deleted.
+
+The workflow selects a ZIP from the repository. Make sure the 3.3 ZIP is the only root-level project ZIP before relying on the APK build.
